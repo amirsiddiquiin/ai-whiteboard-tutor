@@ -23,7 +23,18 @@ describe("POST /api/narration", () => {
       synthesizeLessonNarrationMock,
     );
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toMatchObject({ error: { code: "INVALID_LESSON" } });
+    const data = await response.json();
+    expect(data).toMatchObject({ error: { code: "INVALID_LESSON" } });
+    expect(response.headers.get("X-Request-ID")).toBe(data.error.requestId);
+  });
+
+  it("rejects oversized lesson documents before synthesis", async () => {
+    const oversized = request({ lesson: createValidLesson() });
+    oversized.headers.set("content-length", "200000");
+    const response = await handleNarrationRequest(oversized, synthesizeLessonNarrationMock);
+    expect(response.status).toBe(413);
+    await expect(response.json()).resolves.toMatchObject({ error: { code: "PAYLOAD_TOO_LARGE" } });
+    expect(synthesizeLessonNarrationMock).not.toHaveBeenCalled();
   });
 
   it("returns validated narration without caching", async () => {
@@ -38,6 +49,7 @@ describe("POST /api/narration", () => {
     );
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(response.headers.get("X-Request-ID")).toMatch(/^[0-9a-f-]{36}$/);
     await expect(response.json()).resolves.toMatchObject({ audioBase64: "AQID" });
   });
 

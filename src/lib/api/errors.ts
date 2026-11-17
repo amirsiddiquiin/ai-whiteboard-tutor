@@ -3,6 +3,7 @@ import { z } from "zod";
 
 export const apiErrorCodeSchema = z.enum([
   "INVALID_REQUEST",
+  "PAYLOAD_TOO_LARGE",
   "INVALID_TOPIC",
   "INVALID_LESSON",
   "RATE_LIMITED",
@@ -20,16 +21,25 @@ export function apiError(
   code: ApiErrorCode,
   message: string,
   retryable = false,
+  options: { requestId?: string; headers?: HeadersInit } = {},
 ) {
+  const requestId = options.requestId ?? crypto.randomUUID();
   return NextResponse.json(
     {
       error: {
         code,
         message,
         retryable,
-        requestId: crypto.randomUUID(),
+        requestId,
       },
     },
-    { status },
+    {
+      status,
+      headers: {
+        "Cache-Control": "no-store",
+        "X-Request-ID": requestId,
+        ...Object.fromEntries(new Headers(options.headers)),
+      },
+    },
   );
 }

@@ -6,6 +6,10 @@ import { z } from "zod";
 import type { GeneratedLesson } from "@/features/lesson/schema";
 import type { CueTiming, NarrationResponse } from "@/features/narration/schema";
 import { getSpeechEnv, type SpeechEnv } from "@/lib/env/server";
+import { CircuitBreaker } from "@/lib/resilience/circuit-breaker";
+import { NarrationGenerationError } from "@/lib/tts/errors";
+
+const googleTtsCircuitBreaker = new CircuitBreaker({ failureThreshold: 3, resetAfterMs: 30_000 });
 
 type SynthesisRequest = protos.google.cloud.texttospeech.v1beta1.ISynthesizeSpeechRequest;
 type SynthesisResponse = protos.google.cloud.texttospeech.v1beta1.ISynthesizeSpeechResponse;
@@ -14,24 +18,6 @@ const credentialsSchema = z.object({
   client_email: z.string().email(),
   private_key: z.string().min(1),
 }).passthrough();
-
-export type NarrationErrorCode =
-  | "configuration"
-  | "invalid-response"
-  | "rate-limit"
-  | "timeout"
-  | "provider";
-
-export class NarrationGenerationError extends Error {
-  constructor(
-    readonly code: NarrationErrorCode,
-    message: string,
-    options?: ErrorOptions,
-  ) {
-    super(message, options);
-    this.name = "NarrationGenerationError";
-  }
-}
 
 interface SynthesizeNarrationOptions {
   env?: SpeechEnv;
@@ -81,6 +67,11 @@ function providerStatus(error: unknown) {
     if (Number.isFinite(status)) return status;
   }
   return undefined;
+}
+
+function transientProviderFailure(error: unknown) {
+  const status = providerStatus(error);
+  return status === 4 || status === 8 || status === 408 || status === 429 || status === 504;
 }
 
 function mapProviderError(error: unknown) {
@@ -186,7 +177,10 @@ export async function synthesizeLessonNarration(
         projectId: env.GOOGLE_CLOUD_PROJECT_ID,
         credentials,
       });
-      const [providerResponse] = await client.synthesizeSpeech(request);
+      const [providerResponse] = await googleTtsCircuitBreaker.execute(
+        () => client!.synthesizeSpeech(request),
+        transientProviderFailure,
+      );
       response = providerResponse;
     }
   } catch (error) {

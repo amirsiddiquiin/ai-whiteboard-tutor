@@ -5,9 +5,9 @@ import { createValidLesson } from "@/tests/fixtures/lesson";
 import {
   buildLessonSsml,
   escapeSsml,
-  NarrationGenerationError,
   synthesizeLessonNarration,
 } from "./google-tts";
+import { NarrationGenerationError } from "./errors";
 
 interface TestSynthesisRequest {
   input?: { ssml?: string | null } | null;

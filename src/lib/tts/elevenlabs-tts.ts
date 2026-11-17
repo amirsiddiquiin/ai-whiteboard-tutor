@@ -5,7 +5,10 @@ import { z } from "zod";
 import type { GeneratedLesson } from "@/features/lesson/schema";
 import type { CueTiming, NarrationResponse } from "@/features/narration/schema";
 import { getSpeechEnv, type SpeechEnv } from "@/lib/env/server";
-import { NarrationGenerationError } from "@/lib/tts/google-tts";
+import { CircuitBreaker } from "@/lib/resilience/circuit-breaker";
+import { NarrationGenerationError } from "@/lib/tts/errors";
+
+const elevenLabsCircuitBreaker = new CircuitBreaker({ failureThreshold: 3, resetAfterMs: 30_000 });
 
 const alignmentSchema = z.object({
   characters: z.array(z.string()),
@@ -18,6 +21,13 @@ const elevenLabsResponseSchema = z.object({
   alignment: alignmentSchema.nullable().optional(),
   normalized_alignment: alignmentSchema.nullable().optional(),
 }).passthrough();
+
+class ElevenLabsHttpError extends Error {
+  constructor(readonly status: number) {
+    super("ElevenLabs request failed.");
+    this.name = "ElevenLabsHttpError";
+  }
+}
 
 interface ElevenLabsRequestOptions {
   env?: SpeechEnv;
@@ -103,6 +113,11 @@ function responseError(status: number) {
   return new NarrationGenerationError("provider", "ElevenLabs TTS synthesis failed.");
 }
 
+function transientFetchFailure(error: unknown) {
+  if (error instanceof DOMException && error.name === "TimeoutError") return true;
+  return error instanceof ElevenLabsHttpError && (error.status === 429 || error.status >= 500);
+}
+
 export async function synthesizeElevenLabsNarration(
   lesson: GeneratedLesson,
   options: ElevenLabsRequestOptions = {},
@@ -116,20 +131,22 @@ export async function synthesizeElevenLabsNarration(
     });
   }
 
-  if (!env.ELEVENLABS_API_KEY || !env.ELEVENLABS_VOICE_ID) {
+  const apiKey = env.ELEVENLABS_API_KEY;
+  const voiceId = env.ELEVENLABS_VOICE_ID;
+  if (!apiKey || !voiceId) {
     throw new NarrationGenerationError("configuration", "ElevenLabs TTS is not configured.");
   }
 
   const narration = buildNarrationText(lesson);
   let response: Response;
   try {
-    response = await (options.fetcher ?? fetch)(
-      `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(env.ELEVENLABS_VOICE_ID)}/with-timestamps?output_format=mp3_44100_128`,
-      {
+    const request = async () => {
+      const providerResponse = await (options.fetcher ?? fetch)(
+        `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}/with-timestamps?output_format=mp3_44100_128`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "xi-api-key": env.ELEVENLABS_API_KEY,
+          "xi-api-key": apiKey,
         },
         body: JSON.stringify({
           text: narration.text,
@@ -137,12 +154,17 @@ export async function synthesizeElevenLabsNarration(
         }),
         signal: AbortSignal.timeout(env.PROVIDER_TIMEOUT_MS),
       },
-    );
+      );
+      if (!providerResponse.ok) throw new ElevenLabsHttpError(providerResponse.status);
+      return providerResponse;
+    };
+    response = options.fetcher
+      ? await request()
+      : await elevenLabsCircuitBreaker.execute(request, transientFetchFailure);
   } catch (error) {
+    if (error instanceof ElevenLabsHttpError) throw responseError(error.status);
     throw mapProviderError(error);
   }
-
-  if (!response.ok) throw responseError(response.status);
 
   let providerResponse: z.infer<typeof elevenLabsResponseSchema>;
   try {

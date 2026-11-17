@@ -6,11 +6,13 @@ import { z } from "zod";
 
 import { generatedLessonContentSchema } from "@/features/lesson/schema";
 import type { GeminiEnv } from "@/lib/env/server";
+import { CircuitBreaker } from "@/lib/resilience/circuit-breaker";
 
 import { toGeminiCompatibleSchema } from "./gemini-schema";
 import { createLessonPrompt, LESSON_SYSTEM_PROMPT } from "./lesson-prompt";
 
 const responseJsonSchema = toGeminiCompatibleSchema(z.toJSONSchema(generatedLessonContentSchema));
+const geminiCircuitBreaker = new CircuitBreaker({ failureThreshold: 3, resetAfterMs: 30_000 });
 
 export interface LessonModelRequest {
   topic: string;
@@ -27,6 +29,11 @@ function providerStatus(error: unknown): number | undefined {
   return Number.isFinite(status) ? status : undefined;
 }
 
+function transientProviderFailure(error: unknown) {
+  const status = providerStatus(error);
+  return status === 429 || (status !== undefined && status >= 500);
+}
+
 export const requestGeminiLesson: LessonModelRequester = async ({
   topic,
   env,
@@ -37,20 +44,23 @@ export const requestGeminiLesson: LessonModelRequester = async ({
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      const response = await client.models.generateContent({
-        model: env.GEMINI_MODEL,
-        contents: createLessonPrompt(topic, repairIssues),
-        config: {
-          systemInstruction: LESSON_SYSTEM_PROMPT,
-          responseMimeType: "application/json",
-          responseJsonSchema,
-          maxOutputTokens: 4_096,
-          temperature: repairIssues ? 0.15 : 0.35,
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-          abortSignal: signal,
-          httpOptions: { timeout: env.PROVIDER_TIMEOUT_MS },
-        },
-      });
+      const response = await geminiCircuitBreaker.execute(
+        () => client.models.generateContent({
+          model: env.GEMINI_MODEL,
+          contents: createLessonPrompt(topic, repairIssues),
+          config: {
+            systemInstruction: LESSON_SYSTEM_PROMPT,
+            responseMimeType: "application/json",
+            responseJsonSchema,
+            maxOutputTokens: 4_096,
+            temperature: repairIssues ? 0.15 : 0.35,
+            thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+            abortSignal: signal,
+            httpOptions: { timeout: env.PROVIDER_TIMEOUT_MS },
+          },
+        }),
+        transientProviderFailure,
+      );
 
       if (!response.text) throw new Error("Gemini returned an empty response.");
       return response.text;

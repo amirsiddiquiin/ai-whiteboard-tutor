@@ -4,10 +4,8 @@ import type { GeneratedLesson } from "@/features/lesson/schema";
 import type { NarrationResponse } from "@/features/narration/schema";
 import { getSpeechEnv } from "@/lib/env/server";
 import { synthesizeElevenLabsNarration } from "@/lib/tts/elevenlabs-tts";
-import {
-  NarrationGenerationError,
-  synthesizeLessonNarration as synthesizeGoogleNarration,
-} from "@/lib/tts/google-tts";
+import { NarrationGenerationError } from "@/lib/tts/errors";
+import { synthesizeLessonNarration as synthesizeGoogleNarration } from "@/lib/tts/google-tts";
 
 export async function synthesizeLessonNarration(
   lesson: GeneratedLesson,

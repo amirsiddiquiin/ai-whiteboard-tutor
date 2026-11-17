@@ -203,3 +203,5 @@ Do not treat the mocked tests as proof that the configured Gemini account works.
 - Follow-up AI chat is implemented in Phase 5.
 
 See [docs/architecture.md](docs/architecture.md) for detailed module and API boundaries.
+
+Production and security decisions are documented in [docs/production-readiness.md](docs/production-readiness.md) and [docs/security.md](docs/security.md).

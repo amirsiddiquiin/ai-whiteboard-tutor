@@ -29,7 +29,18 @@ describe("POST /api/lessons", () => {
   it("rejects an empty topic", async () => {
     const response = await POST(lessonRequest({ topic: "" }));
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toMatchObject({ error: { code: "INVALID_TOPIC" } });
+    const data = await response.json();
+    expect(data).toMatchObject({ error: { code: "INVALID_TOPIC" } });
+    expect(response.headers.get("X-Request-ID")).toBe(data.error.requestId);
+  });
+
+  it("rejects oversized requests before calling Gemini", async () => {
+    const request = lessonRequest({ topic: "Binary search" });
+    request.headers.set("content-length", "5000");
+    const response = await POST(request);
+    expect(response.status).toBe(413);
+    await expect(response.json()).resolves.toMatchObject({ error: { code: "PAYLOAD_TOO_LARGE" } });
+    expect(generateLessonMock).not.toHaveBeenCalled();
   });
 
   it("rejects an excessively long topic", async () => {
@@ -43,6 +54,7 @@ describe("POST /api/lessons", () => {
     const response = await POST(lessonRequest({ topic: "  Binary search  " }));
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(response.headers.get("X-Request-ID")).toMatch(/^[0-9a-f-]{36}$/);
     await expect(response.json()).resolves.toMatchObject({
       lesson: { topic: "Binary search", metadata: { timing: "estimated" } },
     });
