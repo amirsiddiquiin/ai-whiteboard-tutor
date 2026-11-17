@@ -10,6 +10,7 @@ export function formatPlaybackTime(seconds: number) {
 
 export interface PlaybackControlsProps {
   currentTime: number;
+  disabled?: boolean;
   duration: number;
   status: PlaybackStatus;
   onPause: () => void;
@@ -21,6 +22,7 @@ export interface PlaybackControlsProps {
 
 export function PlaybackControls({
   currentTime,
+  disabled = false,
   duration,
   status,
   onPause,
@@ -38,6 +40,7 @@ export function PlaybackControls({
       <input
         aria-valuetext={`${formatPlaybackTime(currentTime)} of ${formatPlaybackTime(duration)}`}
         className="lesson-range w-full"
+        disabled={disabled}
         id="lesson-timeline"
         max={duration}
         min="0"
@@ -50,7 +53,8 @@ export function PlaybackControls({
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <button
           aria-label={isPlaying ? "Pause lesson" : isEnded ? "Replay lesson" : "Play lesson"}
-          className="inline-flex h-11 min-w-28 items-center justify-center gap-2 rounded-xl bg-[var(--violet)] px-4 text-sm font-black text-white shadow-[0_8px_20px_rgba(115,87,232,0.28)] transition hover:bg-[var(--violet-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--violet)] focus-visible:ring-offset-2"
+          className="inline-flex h-11 min-w-28 items-center justify-center gap-2 rounded-xl bg-[var(--violet)] px-4 text-sm font-black text-white shadow-[0_8px_20px_rgba(115,87,232,0.28)] transition hover:bg-[var(--violet-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--violet)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-45"
+          disabled={disabled}
           onClick={isPlaying ? onPause : isEnded ? onReplay : onPlay}
           type="button"
         >
@@ -59,7 +63,8 @@ export function PlaybackControls({
         </button>
 
         <button
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--line)] bg-white px-4 text-sm font-bold text-[var(--muted)] transition hover:border-[var(--violet-soft)] hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--violet)]"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--line)] bg-white px-4 text-sm font-bold text-[var(--muted)] transition hover:border-[var(--violet-soft)] hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--violet)] disabled:cursor-not-allowed disabled:opacity-45"
+          disabled={disabled}
           onClick={onRestart}
           type="button"
         >

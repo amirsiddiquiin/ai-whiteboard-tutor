@@ -7,6 +7,7 @@ export interface PlaybackState {
 }
 
 export type PlaybackEvent =
+  | { type: "LOAD_AUDIO"; duration: number }
   | { type: "PLAY" }
   | { type: "PAUSE" }
   | { type: "SEEK"; time: number }
@@ -25,6 +26,8 @@ function clampTime(state: PlaybackState, time: number) {
 
 export function playbackReducer(state: PlaybackState, event: PlaybackEvent): PlaybackState {
   switch (event.type) {
+    case "LOAD_AUDIO":
+      return createPlaybackState(event.duration);
     case "PLAY":
       if (state.duration === 0) return state;
       return {

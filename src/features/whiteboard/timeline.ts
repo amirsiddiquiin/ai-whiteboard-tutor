@@ -1,4 +1,5 @@
 import type { GeneratedLesson, WhiteboardAction } from "@/features/lesson/schema";
+import type { CueTiming } from "@/features/narration/schema";
 
 import {
   EMPTY_WHITEBOARD_STATE,
@@ -15,6 +16,7 @@ export interface TimelineCue {
   endSeconds: number;
   actions: WhiteboardAction[];
 }
+
 export interface LessonTimeline {
   cues: TimelineCue[];
   durationSeconds: number;
@@ -41,6 +43,45 @@ export function buildLessonTimeline(lesson: Pick<GeneratedLesson, "segments">): 
   }
 
   return { cues, durationSeconds: cursor };
+}
+
+export function buildAudioTimeline(
+  lesson: Pick<GeneratedLesson, "segments">,
+  cueTimings: readonly CueTiming[],
+  audioDurationSeconds: number,
+): LessonTimeline {
+  const estimated = buildLessonTimeline(lesson);
+  if (estimated.cues.length === 0) return estimated;
+  if (!Number.isFinite(audioDurationSeconds) || audioDurationSeconds <= 0) {
+    throw new RangeError("Audio duration must be a positive finite number.");
+  }
+
+  const timingByCue = new Map(cueTimings.map((timing) => [timing.cueId, timing.startSeconds]));
+  const starts = estimated.cues.map((cue) => timingByCue.get(cue.cueId));
+  if (starts.some((start) => start === undefined)) {
+    throw new RangeError("Audio timings must include every lesson cue.");
+  }
+
+  const measuredStarts = starts as number[];
+  if (
+    measuredStarts.some(
+      (start, index) =>
+        start < 0 ||
+        start >= audioDurationSeconds ||
+        (index > 0 && start <= measuredStarts[index - 1]),
+    )
+  ) {
+    throw new RangeError("Audio cue timings must be ordered within the audio duration.");
+  }
+
+  return {
+    durationSeconds: audioDurationSeconds,
+    cues: estimated.cues.map((cue, index) => ({
+      ...cue,
+      startSeconds: measuredStarts[index],
+      endSeconds: measuredStarts[index + 1] ?? audioDurationSeconds,
+    })),
+  };
 }
 
 export function clampTimelineTime(timeline: LessonTimeline, seconds: number) {

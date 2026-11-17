@@ -11,25 +11,27 @@ Chalk turns an educational topic into a short, AI-generated lesson designed for 
 - Typed narration cues and allowlisted whiteboard commands
 - Semantic validation for IDs, action ordering, element references, word count, and duration
 - Stale-response protection, duplicate-submit prevention, retryable errors, and validated client storage
+- Lesson title, learning objective, duration, and teaching-segment preview after generation
 - Responsive SVG whiteboard rendering for every allowlisted drawing command
-- Deterministic timeline reconstruction at any playback position
-- Play, pause, resume, seek, restart, replay, keyboard controls, and current cue text
-- Real Gemini lesson data connected directly to the interactive lesson player
-- Unit, component, service, and API route tests with a mocked provider
-
-Phase 3 uses a deterministic visual playback clock. Phase 4 will synthesize narration and make real audio time the playback source of truth.
+- Deterministic timeline reconstruction for forward and backward seeking
+- Play, pause, resume, seek, restart, replay, keyboard controls, and live cue text
+- Server-side Google Cloud Text-to-Speech with SSML cue marks and measured timing
+- Audio-led whiteboard synchronization: the media element is the single playback clock
+- Narration loading, error, retry, autoplay-failure, and cleanup states
+- Unit, component, service, and API route tests with mocked provider boundaries
 
 ## Stack
 
 - Next.js App Router, React, strict TypeScript, and Tailwind CSS
 - Official Google Gen AI SDK with Gemini structured output
+- Official Google Cloud Text-to-Speech client library
 - Zod for API, model-output, and client-response validation
 - Zustand for lesson-generation state
 - Vitest and React Testing Library
 
 ## Setup
 
-Requirements: Node.js 20.9 or later and a Gemini API key from Google AI Studio.
+Requirements: Node.js 20.9 or later, a Gemini API key from Google AI Studio, and a Google Cloud project with Text-to-Speech enabled.
 
 ```bash
 npm install
@@ -43,11 +45,17 @@ Set the following in `.env.local`:
 GEMINI_API_KEY=your-key
 GEMINI_MODEL=gemini-3.5-flash-lite
 PROVIDER_TIMEOUT_MS=30000
+TTS_PROVIDER=elevenlabs
+ELEVENLABS_API_KEY=your-key
+ELEVENLABS_VOICE_ID=your-voice-id
+ELEVENLABS_MODEL_ID=eleven_flash_v2_5
 ```
 
-`GEMINI_API_KEY` is read only by server modules. Do not prefix it with `NEXT_PUBLIC_`, expose it in client code, or commit `.env.local`.
+The Gemini and TTS credentials are read only by server modules. Do not prefix credentials with `NEXT_PUBLIC_`, and never commit `.env.local`. Google TTS remains supported by selecting `TTS_PROVIDER=google` and configuring the documented Google variables in `.env.example`.
 
 Open [http://localhost:3000](http://localhost:3000), enter a topic, and select **Create my lesson**.
+
+The server returns synthesized MP3 bytes and cue marks for the current lesson. The browser creates a temporary object URL and revokes it when the lesson changes or the player unmounts; Phase 4 does not persist audio or credentials in browser storage.
 
 ## Lesson generation flow
 
@@ -160,9 +168,15 @@ Status mappings:
 - `503 CONFIGURATION_ERROR`
 - `504 PROVIDER_TIMEOUT`
 
+### `POST /api/narration`
+
+Accepts a validated generated lesson and returns an MP3 payload plus the measured start time for every cue. The route disables response caching and maps configuration, quota, timeout, provider, and invalid-response failures to the same safe API error shape. Provider credentials never appear in the response.
+
+The player waits for browser audio metadata, combines the measured cue marks with the actual MP3 duration, and drives the deterministic whiteboard timeline from `HTMLAudioElement.currentTime`.
+
 ## Verification
 
-Automated checks use a mocked Gemini requester and never consume provider quota:
+Automated checks mock Gemini, Google TTS, and ElevenLabs provider boundaries and never consume provider quota:
 
 ```bash
 npm run check
@@ -170,19 +184,20 @@ npm run check
 
 To verify the real integration manually:
 
-1. Add a valid `GEMINI_API_KEY` to `.env.local`.
+1. Add valid Gemini and selected TTS-provider settings to `.env.local`.
 2. Start the app with `npm run dev`.
 3. Generate “How binary search works.”
-4. Confirm the response contains a unique lesson ID, roughly two minutes of narration, 3–7 segments, and meaningful visual actions.
-5. Generate an unrelated topic and confirm the result is genuinely different.
-6. Temporarily use an invalid key and confirm the UI shows a retryable provider error without exposing provider details.
+4. Confirm the generated MP3 loads, Play starts audible narration, and the cue text and whiteboard follow the audio position.
+5. Pause, resume, seek backward and forward, restart, and replay; confirm the visual state reconstructs correctly.
+6. Generate an unrelated topic and confirm the lesson and narration are genuinely different.
+7. Temporarily remove a TTS setting and confirm the UI shows a retry action without exposing provider details.
 
 Do not treat the mocked tests as proof that the configured Gemini account works. Real-provider verification must be recorded separately.
 
 ## Known limitations
 
-- Durations are estimates until Phase 4 measures generated audio.
-- Phase 3 intentionally has no synthesized audio; playback currently drives the visual timeline only.
+- Audio is generated on demand and kept only for the current browser session; there is no persistent media store yet.
+- A configured ElevenLabs key and accessible voice, or a configured Google Cloud TTS project, are required for live narration.
 - Gemini may require one repair request, increasing latency and cost.
 - Rate limiting currently relies on provider/project quotas; deployment-level abuse controls remain a release task.
 - Follow-up AI chat is implemented in Phase 5.

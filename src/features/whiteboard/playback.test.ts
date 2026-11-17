@@ -3,6 +3,14 @@ import { describe, expect, it } from "vitest";
 import { createPlaybackState, playbackReducer } from "./playback";
 
 describe("playback reducer", () => {
+  it("loads measured audio duration and resets playback", () => {
+    const state = playbackReducer(
+      { currentTime: 30, duration: 90, status: "playing" },
+      { type: "LOAD_AUDIO", duration: 103.4 },
+    );
+    expect(state).toEqual({ currentTime: 0, duration: 103.4, status: "idle" });
+  });
+
   it("plays, pauses, resumes, and clamps seeks", () => {
     let state = createPlaybackState(120);
     state = playbackReducer(state, { type: "PLAY" });
