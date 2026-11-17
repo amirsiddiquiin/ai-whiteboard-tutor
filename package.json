@@ -17,6 +17,7 @@
     "check": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
+    "@google-cloud/text-to-speech": "^7.2.0",
     "@google/genai": "^2.32.0",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
