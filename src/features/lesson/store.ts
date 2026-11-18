@@ -18,6 +18,7 @@ interface LessonState {
   beginGeneration: (requestId: string) => void;
   completeGeneration: (requestId: string, lesson: GeneratedLesson) => void;
   failGeneration: (requestId: string, message: string) => void;
+  resetLesson: () => void;
   setValidationError: (message: string) => void;
 }
 
@@ -44,6 +45,8 @@ export const useLessonStore = create<LessonState>((set) => ({
         ? { activeRequestId: null, error: message, status: "error" }
         : state,
     ),
+  resetLesson: () =>
+    set({ activeRequestId: null, error: null, lesson: null, status: "idle" }),
   setValidationError: (message) =>
     set({ activeRequestId: null, error: message, status: "error" }),
 }));

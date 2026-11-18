@@ -27,6 +27,21 @@ describe("whiteboardActionSchema", () => {
     }).success).toBe(true);
   });
 
+  it("accepts a validated educational path", () => {
+    expect(whiteboardActionSchema.safeParse({
+      actionId: "draw-curve",
+      order: 0,
+      type: "CREATE_PATH",
+      elementId: "curve",
+      properties: {
+        points: [{ x: 80, y: 500 }, { x: 300, y: 360 }, { x: 520, y: 180 }],
+        color: "violet",
+        closed: false,
+        label: "f(x)",
+      },
+    }).success).toBe(true);
+  });
+
   it("rejects executable and unsupported commands", () => {
     expect(whiteboardActionSchema.safeParse({
       actionId: "unsafe",

@@ -1,87 +1,70 @@
-import { Pause, RotateCcw, Volume2 } from "lucide-react";
+import { BookOpenText, Pause, Rewind, Volume2 } from "lucide-react";
 
 const ARRAY_VALUES = [2, 5, 8, 12, 16, 23, 38];
 
 export function ClassroomPreview() {
   return (
-    <div className="relative mx-auto w-full max-w-[560px] lg:mx-0" aria-label="Preview of a visual binary search lesson">
-      <div className="absolute -inset-5 -z-10 rounded-[48px] bg-[linear-gradient(140deg,rgba(133,105,255,0.16),rgba(70,196,157,0.1))] blur-2xl" />
-      <div className="rotate-[1.2deg] rounded-[34px] border border-white/90 bg-[var(--paper)] p-3 shadow-[0_34px_90px_rgba(42,37,67,0.18)] sm:p-4">
-        <div className="overflow-hidden rounded-[25px] border border-[var(--line)] bg-white">
-          <div className="flex items-center justify-between border-b border-[var(--line-soft)] px-5 py-3">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--violet)]">Now teaching</p>
-              <p className="mt-0.5 text-sm font-extrabold tracking-[-0.02em] text-[var(--ink)]">Binary search</p>
-            </div>
-            <div className="flex items-center gap-2 rounded-full bg-[var(--mint-wash)] px-3 py-1.5 text-[10px] font-bold text-[var(--mint-dark)]">
-              <span className="size-1.5 animate-pulse rounded-full bg-[var(--mint)]" />
-              Step 2 of 5
-            </div>
+    <div className="relative mx-auto w-full max-w-[1100px]" aria-label="Product preview of a visual binary search lesson">
+      <div className="absolute -inset-10 -z-10 rounded-[48px] bg-[radial-gradient(circle,rgba(113,91,229,0.18),transparent_62%)] blur-3xl" />
+      <div className="overflow-hidden rounded-[24px] border border-white/12 bg-[#0d1118] p-2 shadow-[0_34px_100px_rgba(0,0,0,0.48)] sm:p-3">
+        <div className="flex items-center justify-between border-b border-white/8 px-3 py-2.5 text-white sm:px-4">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="size-2 shrink-0 rounded-full bg-[#8ee3bd] shadow-[0_0_0_4px_rgba(142,227,189,0.1)]" />
+            <span className="truncate text-xs font-extrabold">Binary Search · Find 23</span>
           </div>
-
-          <div className="chalk-grid relative min-h-[330px] overflow-hidden p-5 sm:min-h-[390px] sm:p-7">
-            <div className="absolute left-[8%] top-[11%] -rotate-2 rounded-xl bg-[var(--violet-wash)] px-3 py-2 text-xs font-bold text-[var(--violet-dark)] shadow-sm">
-              Sorted smallest → largest
-            </div>
-
-            <div className="absolute left-1/2 top-[29%] w-[88%] -translate-x-1/2">
-              <div className="mb-3 flex justify-center">
-                <span className="rounded-full bg-[var(--amber-wash)] px-3 py-1 text-[11px] font-bold text-[var(--amber-dark)]">
-                  check the middle
-                </span>
-              </div>
-              <div className="flex justify-center gap-1.5 sm:gap-2">
-                {ARRAY_VALUES.map((value, index) => (
-                  <div
-                    className={`grid aspect-square min-w-0 flex-1 place-items-center rounded-xl border-2 text-xs font-extrabold sm:text-sm ${
-                      index === 3
-                        ? "-translate-y-1 border-[var(--amber)] bg-[var(--amber-wash)] text-[var(--amber-dark)] shadow-[0_8px_18px_rgba(237,174,73,0.24)]"
-                        : "border-[var(--line)] bg-white text-[var(--ink)]"
-                    }`}
-                    key={value}
-                  >
-                    {value}
-                  </div>
-                ))}
-              </div>
-              <div className="mx-auto mt-6 flex w-[47%] items-center gap-2 text-[10px] font-bold text-[var(--coral-dark)]">
-                <span className="h-px flex-1 bg-[var(--coral)]" />
-                discard this half
-                <span className="h-px flex-1 bg-[var(--coral)]" />
-              </div>
-            </div>
-
-            <div className="absolute bottom-[10%] left-[7%] max-w-[68%] rounded-2xl rounded-bl-md border border-[var(--line)] bg-white/95 px-4 py-3 shadow-[0_10px_30px_rgba(42,37,67,0.1)]">
-              <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-[var(--muted)]">Tutor</p>
-              <p className="mt-1 text-xs font-semibold leading-5 text-[var(--ink)] sm:text-sm">
-                Twelve is too small, so every value to its left can go.
-              </p>
-            </div>
-          </div>
-
-          <div className="border-t border-[var(--line-soft)] bg-[var(--paper)] px-4 py-4">
-            <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
-              <div className="h-full w-[42%] rounded-full bg-[var(--violet)]" />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="grid size-9 place-items-center rounded-full bg-[var(--ink)] text-white">
-                  <Pause aria-hidden="true" size={14} fill="currentColor" />
-                </span>
-                <span className="text-[11px] font-bold tabular-nums text-[var(--muted)]">0:51 / 2:02</span>
-              </div>
-              <div className="flex items-center gap-3 text-[var(--muted)]">
-                <RotateCcw aria-hidden="true" size={15} />
-                <Volume2 aria-hidden="true" size={16} />
-              </div>
-            </div>
-          </div>
+          <span className="rounded-full bg-white/6 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.13em] text-white/45">Product preview</span>
         </div>
-      </div>
 
-      <div className="absolute -bottom-5 -right-1 rotate-[-3deg] rounded-2xl border border-white/80 bg-[var(--ink)] px-4 py-3 text-white shadow-xl sm:right-5">
-        <p className="text-[10px] font-semibold text-white/60">Next up</p>
-        <p className="mt-0.5 text-xs font-bold">Cut the search space in half</p>
+        <div className="grid bg-[#090d13] lg:grid-cols-[minmax(0,1fr)_270px]">
+          <div className="min-w-0 p-2 sm:p-3">
+            <div className="chalk-grid relative aspect-video overflow-hidden rounded-xl border border-white/8 bg-[#fffefb]">
+              <div className="absolute left-[7%] top-[9%] rounded-lg bg-[#eeeaff] px-3 py-2 text-[clamp(0.55rem,1.4vw,0.8rem)] font-extrabold text-[#5742c5] shadow-sm">Sorted data → halve the search space</div>
+              <div className="absolute left-1/2 top-[36%] w-[86%] -translate-x-1/2">
+                <div className="mb-[3%] flex items-center justify-center gap-2 text-[clamp(0.5rem,1.2vw,0.72rem)] font-extrabold text-[#9a691f]"><span className="h-px w-[12%] bg-[#edae49]" />Check the middle<span className="h-px w-[12%] bg-[#edae49]" /></div>
+                <div className="flex justify-center gap-[1.2%]">
+                  {ARRAY_VALUES.map((value, index) => (
+                    <div
+                      className={`grid aspect-square min-w-0 flex-1 place-items-center rounded-[clamp(0.35rem,1vw,0.75rem)] border-[clamp(1px,0.22vw,3px)] text-[clamp(0.58rem,1.5vw,1rem)] font-black transition ${index === 3 ? "-translate-y-[8%] border-[#edae49] bg-[#fff4d9] text-[#875a18] shadow-[0_8px_22px_rgba(237,174,73,0.28)]" : index < 4 ? "border-[#efb1ab] bg-[#fff3f1] text-[#ba5b54] opacity-50" : "border-[#d8d7df] bg-white text-[#292638]"}`}
+                      key={value}
+                    >
+                      {value}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-[4%] grid grid-cols-2 gap-[5%] text-center text-[clamp(0.48rem,1.15vw,0.68rem)] font-extrabold">
+                  <span className="rounded-full bg-[#fff0ed] px-2 py-1.5 text-[#ad4b44]">discard ≤ 12</span>
+                  <span className="rounded-full bg-[#e8f8f2] px-2 py-1.5 text-[#217b62]">continue right →</span>
+                </div>
+              </div>
+              <div className="absolute bottom-[7%] left-[7%] flex items-center gap-2 text-[clamp(0.48rem,1.1vw,0.68rem)] font-bold text-[#777181]"><span className="size-1.5 rounded-full bg-[#6850dc]" /> Each comparison removes half the candidates.</div>
+            </div>
+
+            <div className="mt-2 rounded-xl border border-white/8 bg-[#111620] p-2.5 sm:p-3">
+              <div className="relative h-4">
+                <div className="absolute inset-x-0 top-1.5 h-1 rounded-full bg-white/10" />
+                <div className="absolute left-0 top-1.5 h-1 w-[44%] rounded-full bg-[#8f79ff]" />
+                {[0, 38, 72].map((position) => <span className="absolute top-1 size-2 -translate-x-1/2 rounded-full border border-[#111620] bg-white/70" key={position} style={{ left: `${position}%` }} />)}
+              </div>
+              <div className="mt-1 flex items-center gap-2 text-white/60">
+                <span className="grid size-8 place-items-center rounded-full bg-white text-[#111620]"><Pause aria-hidden="true" fill="currentColor" size={13} /></span>
+                <Rewind aria-hidden="true" size={14} />
+                <span className="font-mono text-[10px] font-bold"><span className="text-white">0:51</span> / 2:02</span>
+                <Volume2 aria-hidden="true" className="ml-auto" size={15} />
+                <span className="rounded-md bg-white/6 px-2 py-1 text-[9px] font-black">1×</span>
+              </div>
+            </div>
+          </div>
+
+          <aside className="hidden border-l border-white/8 bg-[#111620] p-4 text-white lg:block">
+            <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.14em] text-white/38"><BookOpenText aria-hidden="true" size={13} /> Lesson notes</div>
+            <p className="mt-3 text-xs font-extrabold text-white/88">Compare with the middle</p>
+            <p className="mt-2 text-[11px] font-semibold leading-5 text-white/55">Twelve is smaller than our target, so the entire left half can be ignored.</p>
+            <p className="mt-6 text-[9px] font-black uppercase tracking-[0.13em] text-white/30">Chapters</p>
+            {['The search space', 'Compare & discard', 'Find the target'].map((label, index) => (
+              <div className={`mt-2 flex items-center gap-2 rounded-lg px-2.5 py-2 text-[10px] font-bold ${index === 1 ? "bg-white/8 text-white" : "text-white/38"}`} key={label}><span className={`grid size-5 place-items-center rounded-md ${index === 1 ? "bg-[#7561e8]" : "bg-white/6"}`}>{index + 1}</span>{label}</div>
+            ))}
+          </aside>
+        </div>
       </div>
     </div>
   );

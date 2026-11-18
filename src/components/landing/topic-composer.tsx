@@ -80,9 +80,9 @@ export function TopicComposer() {
   }
 
   return (
-    <div className="w-full max-w-[620px]">
+    <div className="w-full max-w-[650px]">
       <form
-        className="rounded-[30px] border border-white/80 bg-white/78 p-3 shadow-[0_24px_70px_rgba(71,61,116,0.13)] backdrop-blur-xl"
+        className="rounded-[24px] border border-white/10 bg-[#11151d] p-2.5 shadow-[0_22px_65px_rgba(0,0,0,0.32)]"
         onSubmit={handleSubmit}
       >
         <label className="sr-only" htmlFor={topicId}>
@@ -90,19 +90,19 @@ export function TopicComposer() {
         </label>
         <textarea
           id={topicId}
-          className="min-h-28 w-full resize-none rounded-[22px] bg-transparent px-4 py-4 text-[17px] leading-7 text-[var(--ink)] outline-none placeholder:text-[var(--muted-light)]"
+          className="min-h-24 w-full resize-none rounded-[18px] bg-transparent px-3.5 py-3.5 text-base font-medium leading-7 text-white outline-none placeholder:text-white/30"
           maxLength={160}
           onChange={(event) => setTopic(event.target.value)}
           placeholder="What would you like to understand today?"
           value={topic}
         />
 
-        <div className="flex items-center justify-between gap-3 border-t border-[var(--line-soft)] px-1 pt-3">
-          <div className="hidden items-center gap-2 px-3 text-xs font-semibold text-[var(--muted)] sm:flex">
-            <Sparkles aria-hidden="true" className="text-[var(--violet)]" size={15} />
-            AI lesson + live visuals
+        <div className="flex items-center justify-between gap-3 border-t border-white/8 px-1 pt-2.5">
+          <div className="hidden items-center gap-2 px-2 text-[11px] font-bold text-white/45 sm:flex">
+            <Sparkles aria-hidden="true" className="text-[#a995ff]" size={15} />
+            AI lesson · voice · live visuals
           </div>
-          <Button className="ml-auto min-w-40" disabled={isLoading} type="submit">
+          <Button className="ml-auto min-w-40 bg-[var(--violet)] shadow-[0_8px_20px_rgba(104,80,220,0.24)] hover:bg-[var(--violet-dark)]" disabled={isLoading} type="submit">
             {isLoading ? (
               <LoaderCircle aria-hidden="true" className="animate-spin" size={17} />
             ) : (
@@ -115,7 +115,7 @@ export function TopicComposer() {
 
       <p
         aria-live="polite"
-        className={`mt-3 min-h-5 px-3 text-xs font-medium ${status === "error" ? "text-[var(--coral-dark)]" : "text-[var(--muted)]"}`}
+        className={`mt-3 min-h-5 px-1 text-xs font-semibold ${status === "error" ? "text-[#ff9b91]" : "text-white/42"}`}
         role={status === "error" ? "alert" : "status"}
       >
         {status === "error"
@@ -127,10 +127,10 @@ export function TopicComposer() {
               : "Lessons are designed to take about two minutes."}
       </p>
 
-      <div className="mt-5 flex flex-wrap gap-2" aria-label="Example lesson topics">
+      <div className="mt-4 flex flex-wrap gap-2" aria-label="Example lesson topics">
         {EXAMPLE_TOPICS.map((example) => (
           <button
-            className="rounded-full border border-[var(--line)] bg-white/55 px-4 py-2 text-xs font-semibold text-[var(--muted)] transition-colors hover:border-[var(--violet-soft)] hover:bg-white hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--violet)]"
+            className="rounded-full border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-bold text-white/52 transition-colors hover:border-[#8f79ff]/50 hover:bg-white/8 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a995ff]"
             key={example}
             onClick={() => {
               setTopic(example);

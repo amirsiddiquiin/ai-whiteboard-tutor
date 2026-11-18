@@ -12,12 +12,13 @@ const createActions: WhiteboardAction[] = [
   { actionId: "a-arrow", order: 4, type: "CREATE_ARROW", elementId: "arrow", properties: { x1: 560, y1: 170, x2: 680, y2: 170, label: "next", color: "violet" } },
   { actionId: "a-array", order: 5, type: "CREATE_ARRAY", elementId: "array", properties: { x: 100, y: 300, width: 500, values: ["2", "4", "8"], color: "amber" } },
   { actionId: "a-equation", order: 6, type: "CREATE_EQUATION", elementId: "equation", properties: { x: 650, y: 360, expression: "2 + 2 = 4", color: "coral" } },
+  { actionId: "a-path", order: 7, type: "CREATE_PATH", elementId: "curve", properties: { points: [{ x: 80, y: 500 }, { x: 300, y: 360 }, { x: 520, y: 180 }], color: "violet", closed: false, label: "curve" } },
 ];
 
 describe("whiteboard state reducer", () => {
   it("creates every supported drawable element in stable order", () => {
     const state = reduceWhiteboardActions(createActions);
-    expect(state.order).toEqual(["text", "rect", "circle", "line", "arrow", "array", "equation"]);
+    expect(state.order).toEqual(["text", "rect", "circle", "line", "arrow", "array", "equation", "curve"]);
     expect(Object.values(state.elements).map((element) => element.type)).toEqual([
       "CREATE_TEXT",
       "CREATE_RECTANGLE",
@@ -26,6 +27,7 @@ describe("whiteboard state reducer", () => {
       "CREATE_ARROW",
       "CREATE_ARRAY",
       "CREATE_EQUATION",
+      "CREATE_PATH",
     ]);
   });
 

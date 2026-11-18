@@ -13,6 +13,8 @@ describe("WhiteboardRenderer", () => {
       { actionId: "array-action", order: 1, type: "CREATE_ARRAY", elementId: "values", properties: { x: 100, y: 180, width: 600, values: ["2", "5", "8"], color: "blue" } },
       { actionId: "arrow-action", order: 2, type: "CREATE_ARROW", elementId: "arrow", properties: { x1: 200, y1: 320, x2: 500, y2: 320, label: "discard", color: "violet" } },
       { actionId: "equation-action", order: 3, type: "CREATE_EQUATION", elementId: "equation", properties: { x: 620, y: 430, expression: "mid = (L + R) / 2", color: "coral" } },
+      { actionId: "path-action", order: 4, type: "CREATE_PATH", elementId: "curve", properties: { points: [{ x: 80, y: 520 }, { x: 300, y: 380 }, { x: 540, y: 140 }], color: "teal", closed: false, label: "curve" } },
+      { actionId: "long-text-action", order: 5, type: "CREATE_TEXT", elementId: "long-title", properties: { x: 590, y: 120, text: "Derivative equals the slope of the tangent line", color: "violet", size: "xl", weight: "bold" } },
     ];
     const { container } = render(<WhiteboardRenderer state={reduceWhiteboardActions(actions)} title="Binary Search" />);
 
@@ -25,5 +27,7 @@ describe("WhiteboardRenderer", () => {
     expect(screen.getByText("mid = (L + R) / 2")).toBeInTheDocument();
     expect(container.querySelector('[data-element-id="values:1"]')).toBeInTheDocument();
     expect(container.querySelector("line[marker-end]")).toBeInTheDocument();
+    expect(container.querySelector('path[data-element-id="curve"]')).toBeInTheDocument();
+    expect(container.querySelectorAll('[data-element-id="long-title"] tspan').length).toBeGreaterThan(1);
   });
 });

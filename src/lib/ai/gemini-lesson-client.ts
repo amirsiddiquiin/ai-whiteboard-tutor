@@ -12,7 +12,7 @@ import { toGeminiCompatibleSchema } from "./gemini-schema";
 import { createLessonPrompt, LESSON_SYSTEM_PROMPT } from "./lesson-prompt";
 
 const responseJsonSchema = toGeminiCompatibleSchema(z.toJSONSchema(generatedLessonContentSchema));
-const geminiCircuitBreaker = new CircuitBreaker({ failureThreshold: 3, resetAfterMs: 30_000 });
+const geminiCircuitBreaker = new CircuitBreaker({ failureThreshold: 4, resetAfterMs: 30_000 });
 
 export interface LessonModelRequest {
   topic: string;
@@ -42,7 +42,7 @@ export const requestGeminiLesson: LessonModelRequester = async ({
 }) => {
   const client = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY, apiVersion: "v1beta" });
 
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       const response = await geminiCircuitBreaker.execute(
         () => client.models.generateContent({
@@ -65,8 +65,13 @@ export const requestGeminiLesson: LessonModelRequester = async ({
       if (!response.text) throw new Error("Gemini returned an empty response.");
       return response.text;
     } catch (error) {
-      if (attempt === 0 && providerStatus(error) === 503) {
-        await delay(750, undefined, { signal });
+      console.error(JSON.stringify({
+        event: "gemini_provider_failure",
+        name: error instanceof Error ? error.name : "UnknownError",
+        status: providerStatus(error) ?? "unknown",
+      }));
+      if (attempt < 2 && providerStatus(error) === 503) {
+        await delay(750 * (attempt + 1), undefined, { signal });
         continue;
       }
       throw error;

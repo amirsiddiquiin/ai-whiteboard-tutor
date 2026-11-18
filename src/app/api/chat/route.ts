@@ -1,4 +1,5 @@
 import { chatRequestSchema } from "@/features/chat/schema";
+import { FollowUpError, generateFollowUpAnswer } from "@/lib/ai/follow-up";
 import { apiError } from "@/lib/api/errors";
 import { createApiRequestContext, observedResponse } from "@/lib/api/observability";
 import { InMemoryRateLimiter } from "@/lib/api/rate-limit";
@@ -31,13 +32,20 @@ export async function POST(request: Request) {
     ), tooLarge ? "payload_too_large" : "invalid_json");
   }
 
-  if (!chatRequestSchema.safeParse(body).success) {
+  const parsed = chatRequestSchema.safeParse(body);
+  if (!parsed.success) {
     return observedResponse(context, apiError(400, "INVALID_REQUEST", "The chat request is incomplete or too long.", false, {
       requestId: context.requestId,
     }), "invalid_request");
   }
 
-  return observedResponse(context, apiError(503, "FEATURE_NOT_READY", "Follow-up tutoring will be connected in Phase 5.", false, {
-    requestId: context.requestId,
-  }), "feature_not_ready");
+  try {
+    const message = await generateFollowUpAnswer(parsed.data, request.signal);
+    return observedResponse(context, Response.json({ message }, { status: 200, headers: { "Cache-Control": "no-store" } }), "success");
+  } catch (error) {
+    const code = error instanceof FollowUpError ? error.code : "provider";
+    const status = code === "rate-limit" ? 429 : code === "timeout" ? 504 : code === "configuration" ? 503 : 502;
+    const publicCode = code === "rate-limit" ? "RATE_LIMITED" : code === "timeout" ? "PROVIDER_TIMEOUT" : code === "configuration" ? "CONFIGURATION_ERROR" : "AI_PROVIDER_ERROR";
+    return observedResponse(context, apiError(status, publicCode, error instanceof FollowUpError ? error.message : "Chalk could not answer right now.", code !== "configuration", { requestId: context.requestId }), `follow_up_${code}`);
+  }
 }

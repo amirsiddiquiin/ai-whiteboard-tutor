@@ -1,4 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { generateFollowUpAnswer } = vi.hoisted(() => ({ generateFollowUpAnswer: vi.fn() }));
+
+vi.mock("@/lib/ai/follow-up", () => ({
+  FollowUpError: class FollowUpError extends Error {
+    constructor(readonly code: string, message: string) { super(message); }
+  },
+  generateFollowUpAnswer,
+}));
 
 import { POST } from "./route";
 
@@ -18,10 +27,14 @@ const validChat = {
 };
 
 describe("POST /api/chat boundary", () => {
-  it("keeps Phase 5 disabled behind a validated request", async () => {
+  beforeEach(() => generateFollowUpAnswer.mockReset());
+
+  it("returns a contextual Gemini follow-up answer", async () => {
+    generateFollowUpAnswer.mockResolvedValue("Sorting lets us discard an entire half safely.");
     const response = await POST(request(JSON.stringify(validChat)));
-    expect(response.status).toBe(503);
-    await expect(response.json()).resolves.toMatchObject({ error: { code: "FEATURE_NOT_READY" } });
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ message: "Sorting lets us discard an entire half safely." });
+    expect(generateFollowUpAnswer).toHaveBeenCalledWith(expect.objectContaining({ topic: "Binary search" }), expect.any(AbortSignal));
     expect(response.headers.get("X-Request-ID")).toMatch(/^[0-9a-f-]{36}$/);
   });
 

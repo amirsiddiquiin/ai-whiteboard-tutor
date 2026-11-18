@@ -32,4 +32,23 @@ describe("lesson generation store", () => {
     useLessonStore.getState().completeGeneration("second", secondLesson);
     expect(useLessonStore.getState().lesson?.topic).toBe("Second topic");
   });
+
+  it("returns a completed lesson to a clean topic-entry state", () => {
+    const lesson = createValidLesson("Binary search");
+
+    useLessonStore.setState({
+      activeRequestId: null,
+      error: null,
+      lesson,
+      status: "success",
+    });
+    useLessonStore.getState().resetLesson();
+
+    expect(useLessonStore.getState()).toMatchObject({
+      activeRequestId: null,
+      error: null,
+      lesson: null,
+      status: "idle",
+    });
+  });
 });

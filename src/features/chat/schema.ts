@@ -10,6 +10,7 @@ export const chatRequestSchema = z.object({
   topic: z.string().min(2).max(160),
   learningObjective: z.string().min(10).max(240),
   currentCueId: z.string().max(80).optional(),
+  currentCueText: z.string().max(1_500).optional(),
   messages: z.array(chatMessageSchema).min(1).max(12),
 });
 

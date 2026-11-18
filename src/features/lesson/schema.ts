@@ -86,6 +86,20 @@ const createEquationAction = actionBase.extend({
   }).strict(),
 });
 
+const createPathAction = actionBase.extend({
+  type: z.literal("CREATE_PATH"),
+  elementId: stableId,
+  properties: z.object({
+    points: z.array(z.object({
+      x: coordinate,
+      y: verticalCoordinate,
+    }).strict()).min(2).max(24),
+    color,
+    closed: z.boolean(),
+    label: z.string().max(80).optional(),
+  }).strict(),
+});
+
 const updateElementProperties = z.object({
   x: coordinate.optional(),
   y: verticalCoordinate.optional(),
@@ -127,6 +141,7 @@ export const whiteboardActionSchema = z.discriminatedUnion("type", [
   createConnectorAction("CREATE_ARROW"),
   createArrayAction,
   createEquationAction,
+  createPathAction,
   updateElementAction,
   highlightElementAction,
   removeElementAction,
