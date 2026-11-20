@@ -8,8 +8,9 @@ import { WhiteboardRenderer } from "@/components/whiteboard/whiteboard-renderer"
 import type { GeneratedLesson } from "@/features/lesson/schema";
 import { useLessonStore } from "@/features/lesson/store";
 import { useNarrationAudio } from "@/features/narration/client";
+import { buildMotionSchedule, getMotionFrameAtTime } from "@/features/whiteboard/motion";
 import { createPlaybackState, playbackReducer } from "@/features/whiteboard/playback";
-import { buildAudioTimeline, buildLessonTimeline, getCueAtTime, getWhiteboardStateAtTime } from "@/features/whiteboard/timeline";
+import { buildAudioTimeline, buildLessonTimeline, getCueAtTime } from "@/features/whiteboard/timeline";
 
 interface ChatMessage { content: string; role: "user" | "assistant" }
 
@@ -98,9 +99,13 @@ function LessonPlayerSession({ lesson }: { lesson: GeneratedLesson }) {
   const [volume, setVolume] = useState(1);
   const [playback, dispatch] = useReducer(playbackReducer, 0, createPlaybackState);
   const timeline = useMemo(() => audioDuration === null ? estimatedTimeline : buildAudioTimeline(lesson, narration.cueTimings, audioDuration), [audioDuration, estimatedTimeline, lesson, narration.cueTimings]);
+  const motionSchedule = useMemo(() => buildMotionSchedule(timeline), [timeline]);
   const controlsReady = narration.status === "ready" && audioDuration !== null;
   const cue = getCueAtTime(timeline, playback.currentTime);
-  const whiteboardState = useMemo(() => getWhiteboardStateAtTime(timeline, playback.currentTime), [playback.currentTime, timeline]);
+  const motionFrame = useMemo(
+    () => getMotionFrameAtTime(timeline, playback.currentTime, motionSchedule),
+    [motionSchedule, playback.currentTime, timeline],
+  );
   const cueIndex = cue ? timeline.cues.findIndex((item) => item.cueId === cue.cueId) : 0;
   const chapters = useMemo<PlaybackChapter[]>(() => lesson.segments.flatMap((segment) => {
     const firstCue = timeline.cues.find((candidate) => candidate.segmentId === segment.id);
@@ -178,7 +183,7 @@ function LessonPlayerSession({ lesson }: { lesson: GeneratedLesson }) {
       <div className="teaching-workspace">
         <div className="board-surface">
           <nav className="chapter-rail" aria-label="Lesson chapters">{chapters.map((chapter, index) => <button className={`chapter-stop ${activeChapter === chapter.id ? "is-active" : ""}`} key={chapter.id} onClick={() => seek(chapter.startSeconds)} type="button"><small>Chapter 0{index + 1}</small><strong>{chapter.label}</strong></button>)}</nav>
-          <div className="board-viewport"><WhiteboardRenderer cueLabel={cue?.segmentTitle} state={whiteboardState} title={lesson.title} /></div>
+          <div className="board-viewport"><WhiteboardRenderer camera={motionFrame.camera} cueLabel={cue?.segmentTitle} motions={motionFrame.motions} state={motionFrame.state} title={lesson.title} /></div>
           <div aria-live="polite" className="cue-caption"><small><span className="sr-only">Cue {cueIndex + 1} of {timeline.cues.length}</span><span aria-hidden="true">Now teaching · {cue?.segmentTitle ?? "Lesson overview"}</span></small><p>{cue?.narration ?? lesson.learningObjective}</p></div>
 
           {narration.status === "loading" ? <div className="narration-notice" role="status"><LoaderCircle aria-hidden="true" className="animate-spin" size={16} /><span><strong>Preparing voice</strong><small>The visual lesson is ready to explore.</small></span></div> : null}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { toGeminiCompatibleSchema } from "./gemini-schema";
+import { requireMotionInActionSchemas, toGeminiCompatibleSchema } from "./gemini-schema";
 
 describe("toGeminiCompatibleSchema", () => {
   it("converts literals and removes unsupported validation keywords", () => {
@@ -22,5 +22,27 @@ describe("toGeminiCompatibleSchema", () => {
         values: { type: "array" },
       },
     });
+  });
+});
+
+describe("requireMotionInActionSchemas", () => {
+  it("requires choreography only on action-shaped schema objects", () => {
+    const schema = requireMotionInActionSchemas({
+      properties: {
+        actions: {
+          items: {
+            properties: {
+              actionId: { type: "string" },
+              order: { type: "integer" },
+              type: { enum: ["CREATE_TEXT"] },
+              motion: { type: "object" },
+            },
+            required: ["actionId", "order", "type"],
+          },
+        },
+      },
+    }) as { properties: { actions: { items: { required: string[] } } } };
+
+    expect(schema.properties.actions.items.required).toContain("motion");
   });
 });

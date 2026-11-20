@@ -70,6 +70,7 @@ describe("LessonPlayer audio synchronization", () => {
     fireEvent.timeUpdate(audio as HTMLAudioElement);
     expect(slider).toHaveValue("34");
     expect(screen.getByText("Cue 3 of 6")).toBeInTheDocument();
+    expect(container.querySelector('[data-motion-phase="enter"]')).toBeInTheDocument();
 
     fireEvent.change(slider, { target: { value: "70" } });
     expect((audio as HTMLAudioElement).currentTime).toBe(70);

@@ -19,7 +19,27 @@ describe("composeWhiteboardLayout", () => {
     if (title.type !== "CREATE_TEXT" || label.type !== "CREATE_TEXT" || curve.type !== "CREATE_PATH") return;
     expect(title.properties.x).toBeLessThanOrEqual(818);
     expect(label.properties.y).not.toBe(title.properties.y);
-    expect(curve.properties.points).toEqual([{ x: 42, y: 28 }, { x: 958, y: 560 }]);
+    expect(curve.properties.points).toEqual([{ x: 54, y: 108 }, { x: 946, y: 552 }]);
+  });
+
+  it("moves overlapping containers into distinct presentation slots", () => {
+    const actions: WhiteboardAction[] = [
+      { actionId: "first", order: 0, type: "CREATE_RECTANGLE", elementId: "input", properties: { x: 120, y: 180, width: 280, height: 140, label: "Input", color: "blue" } },
+      { actionId: "second", order: 1, type: "CREATE_RECTANGLE", elementId: "transform", properties: { x: 140, y: 190, width: 280, height: 140, label: "Transform", color: "violet" } },
+    ];
+    const state = composeWhiteboardLayout(reduceWhiteboardActions(actions));
+    const input = state.elements.input;
+    const transform = state.elements.transform;
+    if (input.type !== "CREATE_RECTANGLE" || transform.type !== "CREATE_RECTANGLE") return;
+
+    const separated =
+      input.properties.x + input.properties.width + 18 <= transform.properties.x ||
+      transform.properties.x + transform.properties.width + 18 <= input.properties.x ||
+      input.properties.y + input.properties.height + 18 <= transform.properties.y ||
+      transform.properties.y + transform.properties.height + 18 <= input.properties.y;
+    expect(separated, JSON.stringify({ input: input.properties, transform: transform.properties })).toBe(true);
+    expect(transform.properties.x + transform.properties.width).toBeLessThanOrEqual(946);
+    expect(transform.properties.y + transform.properties.height).toBeLessThanOrEqual(552);
   });
 
   it("clamps moved line and circle aliases instead of letting updates escape", () => {

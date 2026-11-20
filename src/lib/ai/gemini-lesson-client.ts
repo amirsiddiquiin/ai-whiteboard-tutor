@@ -8,10 +8,12 @@ import { generatedLessonContentSchema } from "@/features/lesson/schema";
 import type { GeminiEnv } from "@/lib/env/server";
 import { CircuitBreaker } from "@/lib/resilience/circuit-breaker";
 
-import { toGeminiCompatibleSchema } from "./gemini-schema";
+import { requireMotionInActionSchemas, toGeminiCompatibleSchema } from "./gemini-schema";
 import { createLessonPrompt, LESSON_SYSTEM_PROMPT } from "./lesson-prompt";
 
-const responseJsonSchema = toGeminiCompatibleSchema(z.toJSONSchema(generatedLessonContentSchema));
+const responseJsonSchema = toGeminiCompatibleSchema(
+  requireMotionInActionSchemas(z.toJSONSchema(generatedLessonContentSchema)),
+);
 const geminiCircuitBreaker = new CircuitBreaker({ failureThreshold: 4, resetAfterMs: 30_000 });
 
 export interface LessonModelRequest {

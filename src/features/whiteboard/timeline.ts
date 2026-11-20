@@ -101,9 +101,25 @@ export function getWhiteboardStateAtTime(
   seconds: number,
 ): WhiteboardState {
   const time = clampTimelineTime(timeline, seconds);
-  const actions = timeline.cues.flatMap((cue) =>
-    cue.startSeconds <= time ? cue.actions : [],
-  );
+  const actions = timeline.cues.flatMap((cue) => {
+    if (time < cue.startSeconds) return [];
+    if (time >= cue.endSeconds || cue.actions.length <= 1) return cue.actions;
+
+    const startsWithClear = cue.actions[0]?.type === "CLEAR_WHITEBOARD";
+    const initialCount = startsWithClear ? Math.min(2, cue.actions.length) : 1;
+    const remaining = cue.actions.length - initialCount;
+    if (remaining <= 0) return cue.actions;
+
+    const cueDuration = cue.endSeconds - cue.startSeconds;
+    const revealWindow = cueDuration * 0.72;
+    const revealInterval = Math.min(2.5, revealWindow / remaining);
+    const elapsed = time - cue.startSeconds;
+    const visibleCount = Math.min(
+      cue.actions.length,
+      initialCount + Math.floor(elapsed / Math.max(revealInterval, 0.25)),
+    );
+    return cue.actions.slice(0, visibleCount);
+  });
   return reduceWhiteboardActions(actions, EMPTY_WHITEBOARD_STATE);
 }
 

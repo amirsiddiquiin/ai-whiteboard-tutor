@@ -56,6 +56,7 @@ describe("POST /api/narration", () => {
   it.each([
     ["configuration", 503, "CONFIGURATION_ERROR"],
     ["invalid-response", 502, "TTS_PROVIDER_ERROR"],
+    ["quota", 429, "RATE_LIMITED"],
     ["rate-limit", 429, "RATE_LIMITED"],
     ["timeout", 504, "PROVIDER_TIMEOUT"],
     ["provider", 502, "TTS_PROVIDER_ERROR"],

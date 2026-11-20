@@ -41,6 +41,21 @@ describe("lesson timeline", () => {
     expect(backward.highlights).toEqual({});
   });
 
+  it("reveals multi-action cues progressively instead of dumping the scene at once", () => {
+    const lesson = createValidLesson();
+    lesson.segments[0].cues[0].actions = [
+      { actionId: "clear-scene", order: 0, type: "CLEAR_WHITEBOARD", properties: {} },
+      { actionId: "add-title", order: 1, type: "CREATE_TEXT", elementId: "scene-title", properties: { x: 80, y: 140, text: "Search space", color: "ink", size: "lg", weight: "bold" } },
+      { actionId: "add-values", order: 2, type: "CREATE_ARRAY", elementId: "scene-values", properties: { x: 120, y: 240, width: 700, values: ["2", "5", "8"], color: "blue" } },
+      { actionId: "mark-middle", order: 3, type: "HIGHLIGHT_ELEMENT", targetId: "scene-values:1", properties: { active: true, color: "amber" } },
+    ];
+    const timeline = buildLessonTimeline(lesson);
+
+    expect(getWhiteboardStateAtTime(timeline, 0).order).toEqual(["scene-title"]);
+    expect(getWhiteboardStateAtTime(timeline, 4).order).toEqual(["scene-title", "scene-values"]);
+    expect(getWhiteboardStateAtTime(timeline, 8).highlights["scene-values:1"]).toEqual({ active: true, color: "amber" });
+  });
+
   it("clamps boundaries and supports empty lessons", () => {
     const timeline = buildLessonTimeline(createValidLesson());
     expect(getWhiteboardStateAtTime(timeline, -10).order).toEqual(["topic-title"]);

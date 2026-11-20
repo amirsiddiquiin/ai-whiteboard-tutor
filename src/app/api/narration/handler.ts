@@ -10,6 +10,7 @@ import { synthesizeLessonNarration } from "@/lib/tts/narration";
 const narrationErrorCodes = new Set<NarrationErrorCode>([
   "configuration",
   "invalid-response",
+  "quota",
   "rate-limit",
   "timeout",
   "provider",
@@ -66,6 +67,8 @@ export async function handleNarrationRequest(
         return apiError(503, "CONFIGURATION_ERROR", "Narration is not configured.", false, { requestId });
       case "invalid-response":
         return apiError(502, "TTS_PROVIDER_ERROR", "Narration audio was invalid. Please retry.", true, { requestId });
+      case "quota":
+        return apiError(429, "RATE_LIMITED", "Narration quota is exhausted. Add provider credits and retry.", false, { requestId });
       case "rate-limit":
         return apiError(429, "RATE_LIMITED", "Narration generation is busy. Try again shortly.", true, { requestId });
       case "timeout":

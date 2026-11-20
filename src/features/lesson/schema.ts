@@ -5,9 +5,28 @@ const coordinate = z.number().min(0).max(1000);
 const verticalCoordinate = z.number().min(0).max(600);
 const color = z.enum(["ink", "blue", "teal", "amber", "coral", "violet", "muted"]);
 
+const motion = z.object({
+  at: z.number().min(0).max(0.9),
+  duration: z.number().min(0.2).max(4),
+  easing: z.enum(["ease-out", "ease-in-out", "spring"]),
+  effect: z.enum([
+    "draw",
+    "rise",
+    "scale",
+    "stagger",
+    "morph",
+    "pulse",
+    "fade",
+    "crossfade",
+    "slide-left",
+    "slide-right",
+  ]),
+}).strict();
+
 const actionBase = z.object({
   actionId: stableId,
   order: z.number().int().min(0).max(7),
+  motion: motion.optional(),
 });
 
 const createTextAction = actionBase.extend({

@@ -112,4 +112,19 @@ describe("ElevenLabs TTS narration", () => {
       }),
     ).rejects.toMatchObject({ code });
   });
+
+  it("preserves ElevenLabs quota exhaustion as a distinct error", async () => {
+    await expect(
+      synthesizeElevenLabsNarration(createValidLesson(), {
+        env,
+        fetcher: vi.fn(async () => Response.json({
+          detail: {
+            type: "invalid_request",
+            code: "quota_exceeded",
+            message: "This request exceeds your quota.",
+          },
+        }, { status: 401 })),
+      }),
+    ).rejects.toMatchObject({ code: "quota" });
+  });
 });

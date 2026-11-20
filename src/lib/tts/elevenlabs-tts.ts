@@ -23,7 +23,10 @@ const elevenLabsResponseSchema = z.object({
 }).passthrough();
 
 class ElevenLabsHttpError extends Error {
-  constructor(readonly status: number) {
+  constructor(
+    readonly status: number,
+    readonly providerCode?: string,
+  ) {
     super("ElevenLabs request failed.");
     this.name = "ElevenLabsHttpError";
   }
@@ -100,7 +103,10 @@ function mapProviderError(error: unknown) {
   });
 }
 
-function responseError(status: number) {
+function responseError(status: number, providerCode?: string) {
+  if (providerCode === "quota_exceeded") {
+    return new NarrationGenerationError("quota", "ElevenLabs TTS quota was reached.");
+  }
   if (status === 401 || status === 403) {
     return new NarrationGenerationError("configuration", "ElevenLabs TTS is not configured.");
   }
@@ -155,14 +161,31 @@ export async function synthesizeElevenLabsNarration(
         signal: AbortSignal.timeout(env.PROVIDER_TIMEOUT_MS),
       },
       );
-      if (!providerResponse.ok) throw new ElevenLabsHttpError(providerResponse.status);
+      if (!providerResponse.ok) {
+        let providerCode: string | undefined;
+        try {
+          const body: unknown = await providerResponse.json();
+          if (typeof body === "object" && body !== null && "detail" in body) {
+            const detail = (body as { detail?: unknown }).detail;
+            if (typeof detail === "object" && detail !== null && "code" in detail) {
+              const code = (detail as { code?: unknown }).code;
+              if (typeof code === "string") providerCode = code;
+            }
+          }
+        } catch {
+          // Status-based mapping remains the fallback for non-JSON provider errors.
+        }
+        throw new ElevenLabsHttpError(providerResponse.status, providerCode);
+      }
       return providerResponse;
     };
     response = options.fetcher
       ? await request()
       : await elevenLabsCircuitBreaker.execute(request, transientFetchFailure);
   } catch (error) {
-    if (error instanceof ElevenLabsHttpError) throw responseError(error.status);
+    if (error instanceof ElevenLabsHttpError) {
+      throw responseError(error.status, error.providerCode);
+    }
     throw mapProviderError(error);
   }
 

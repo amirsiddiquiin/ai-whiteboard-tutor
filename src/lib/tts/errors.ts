@@ -1,6 +1,7 @@
 export type NarrationErrorCode =
   | "configuration"
   | "invalid-response"
+  | "quota"
   | "rate-limit"
   | "timeout"
   | "provider";
